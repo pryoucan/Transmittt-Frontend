@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 function App() {
   const [file, setFile] = useState<File | null>(null)
   const [text, setText] = useState('')
@@ -26,7 +28,7 @@ function App() {
     try {
       setLoadingItems(true)
       setGetError('')
-      const res = await fetch('/api/files')
+      const res = await fetch(`${API_BASE}/api/files`)
       const data = await res.json()
       
       if (!res.ok || data.success === false) {
@@ -63,7 +65,7 @@ function App() {
     setFileUploading(true)
     setUploadError('')
     try {
-      const res = await fetch('/api/files/upload', { method: 'POST', body: form })
+      const res = await fetch(`${API_BASE}/api/files/upload`, { method: 'POST', body: form })
       const json = await res.json()
       if (!res.ok || json.success === false) {
         setUploadError(json.message || json.error?.message || "File upload failed")
@@ -82,7 +84,7 @@ function App() {
     setTextUploading(true)
     setTextUploadError('')
     try {
-      const res = await fetch('/api/text/upload', {
+      const res = await fetch(`${API_BASE}/api/text/upload`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
@@ -103,7 +105,7 @@ function App() {
   async function getDownloadLink(fileName: string) {
     setGetError('')
     try {
-      const res = await fetch(`/api/files/download/${encodeURIComponent(fileName)}`);
+      const res = await fetch(`${API_BASE}/api/files/download/${encodeURIComponent(fileName)}`);
       const json = await res.json();
       if (!res.ok || json.success === false) {
         setGetError(json.message || json.error?.message || "Failed to fetch link")
@@ -125,7 +127,7 @@ function App() {
 
   async function handleView(item: any) {
     if (item.type === 'text') {
-      window.open(`/api/text/${item.id}`, '_blank');
+      window.open(`${API_BASE}/api/text/${item.id}`, '_blank');
       return;
     }
     const fileName = item.file_name;
@@ -140,7 +142,7 @@ function App() {
 
   async function handleCopy(item: any) {
     try {
-      const res = await fetch(`/api/text/${item.id}`);
+      const res = await fetch(`${API_BASE}/api/text/${item.id}`);
       if (res.ok) {
         const json = await res.json();
         const textContent = json.data;
