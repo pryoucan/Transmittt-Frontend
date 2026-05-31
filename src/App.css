@@ -108,6 +108,66 @@ body {
   opacity: 0.5;
 }
 
+.drop-zone {
+  border: 1.5px dashed currentColor;
+  border-radius: 6px;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+  user-select: none;
+  min-height: 180px;
+}
+
+.drop-zone:hover {
+  opacity: 0.85;
+}
+
+.drop-zone.drag-over {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.04);
+  border-color: currentColor;
+  border-style: solid;
+}
+
+.drop-zone.uploading {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.drop-zone-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.drop-zone-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.drop-zone-hint {
+  font-size: 12px;
+  opacity: 0.55;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
 .textarea {
   font-family: inherit;
   font-size: 13px;

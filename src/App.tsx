@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -17,6 +17,9 @@ function App() {
   const [uploadError, setUploadError] = useState('')
   const [textUploadError, setTextUploadError] = useState('')
   const [getError, setGetError] = useState('')
+  const [dragOver, setDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const dragCounter = useRef(0)
 
   useEffect(() => {
     if (mode === 'get') {
@@ -58,10 +61,11 @@ function App() {
     }
   }
 
-  async function handleUpload() {
-    if (!file) return
+  async function handleUpload(fileToUpload?: File) {
+    const f = fileToUpload ?? file
+    if (!f) return
     const form = new FormData()
-    form.append('file', file)
+    form.append('file', f)
     setFileUploading(true)
     setUploadError('')
     try {
@@ -77,6 +81,23 @@ function App() {
     } finally {
       setFileUploading(false)
     }
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragOver(false)
+    const dropped = e.dataTransfer.files[0]
+    if (!dropped) return
+    setFile(dropped)
+    handleUpload(dropped)
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0] ?? null
+    if (!selected) return
+    setFile(selected)
+    handleUpload(selected)
+    e.target.value = ''
   }
 
   async function handleTextUpload() {
@@ -230,20 +251,43 @@ function App() {
         <div className="panels">
           <section className="panel">
           <h2 className="panel-title">Upload File</h2>
-          <p className="panel-desc">Select a file from your device to upload.</p>
+          <p className="panel-desc">Drag and drop a file to upload instantly, or click to browse.</p>
           <div className="panel-body">
             <input
+              ref={fileInputRef}
               type="file"
-              onChange={e => setFile(e.target.files?.[0] ?? null)}
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
             />
-            {file && <p className="file-name">{file.name}</p>}
+            <div
+              className={`drop-zone${dragOver ? ' drag-over' : ''}${fileUploading ? ' uploading' : ''}`}
+              onDragOver={e => e.preventDefault()}
+              onDragEnter={e => { e.preventDefault(); dragCounter.current++; setDragOver(true) }}
+              onDragLeave={() => { dragCounter.current--; if (dragCounter.current === 0) setDragOver(false) }}
+              onDrop={e => { dragCounter.current = 0; handleDrop(e) }}
+              onClick={() => !fileUploading && fileInputRef.current?.click()}
+            >
+              {fileUploading ? (
+                <>
+                  <svg className="drop-zone-icon spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  <p className="drop-zone-text">Uploading…</p>
+                  <p className="drop-zone-hint">{file?.name}</p>
+                </>
+              ) : (
+                <>
+                  <svg className="drop-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <p className="drop-zone-text">{dragOver ? 'Release to upload' : 'Drop file here'}</p>
+                  <p className="drop-zone-hint">or click to browse</p>
+                </>
+              )}
+            </div>
           </div>
-          <div className="panel-footer">
-            {uploadError && <p style={{ color: 'red', margin: '0 0 8px 0', fontSize: '13px' }}>{uploadError}</p>}
-            <button className="btn" onClick={handleUpload} disabled={!file || fileUploading}>
-              {fileUploading ? 'Uploading...' : 'Upload'}
-            </button>
-          </div>
+          {uploadError && (
+            <div className="panel-footer">
+              <p style={{ color: 'red', margin: '0 0 8px 0', fontSize: '13px' }}>{uploadError}</p>
+              <button className="btn" onClick={() => handleUpload()} disabled={!file || fileUploading}>Retry</button>
+            </div>
+          )}
         </section>
 
         <div className="divider">
